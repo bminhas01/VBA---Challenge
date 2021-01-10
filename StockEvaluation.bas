@@ -4,12 +4,15 @@ Sub StockEvaluation()
 
 Dim Current As Worksheet
 Dim starting_ws As Worksheet
+
+'Set the current worksheet as active
 Set starting_ws = ActiveSheet
 
 'Turn off screen updating and automatic calculations
 Application.Calculation = xlManual
 Application.ScreenUpdating = False
 
+'Apply following code to one sheet at a time
 For Each Current In ThisWorkbook.Worksheets
     Current.Activate
 
@@ -283,14 +286,15 @@ Rows(1).HorizontalAlignment = xlCenter
 Rows(1).Font.Bold = True
 Columns(17).Font.Bold = True
 
+'Looping through next sheet
+Next Current
+
+'Activating the original worksheet
+starting_ws.Activate
 
 'Turn on screen updating and automatic calculations
 Application.Calculation = xlAutomatic
 Application.ScreenUpdating = True
 
-
-Next Current
-
-starting_ws.Activate
 End Sub
 
