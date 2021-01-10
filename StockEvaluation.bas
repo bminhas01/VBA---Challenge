@@ -5,16 +5,20 @@ Sub StockEvaluation()
 Dim Current As Worksheet
 Dim starting_ws As Worksheet
 
+
 'Set the current worksheet as active
 Set starting_ws = ActiveSheet
+
 
 'Turn off screen updating and automatic calculations
 Application.Calculation = xlManual
 Application.ScreenUpdating = False
 
+
 'Apply following code to one sheet at a time
 For Each Current In ThisWorkbook.Worksheets
     Current.Activate
+
 
 'Declare Variables
 Dim DataRange As Range
@@ -38,6 +42,7 @@ Dim MinPercentIncrease As Double
 Dim MaxPercentIncrease As Double
 Dim MaxVolIncrease As Double
 
+
 'Sort Data based on Ticker value and Date value
 Range("A1").CurrentRegion.Sort Key1:=Range("A1"), Order1:=xlAscending, Key2:=Range("B1"), Order2:=xlAscending, Header:=xlYes
 
@@ -49,11 +54,11 @@ Range("L1").value = "Close Value"
 Range("M1").value = "Yearly Change"
 Range("N1").value = "Percent Change"
 Range("O1").value = "Total Stock Value"
-Cells(2, 17).value = "Greatest % Increase"
-Cells(3, 17).value = "Greatest % Decrease"
-Cells(4, 17).value = "Greatest Total Volume"
-Cells(1, 18).value = "Ticker"
-Cells(1, 19).value = "Value"
+Cells(2, 18).value = "Greatest % Increase"
+Cells(3, 18).value = "Greatest % Decrease"
+Cells(4, 18).value = "Greatest Total Volume"
+Cells(1, 19).value = "Ticker"
+Cells(1, 20).value = "Value"
 
 
 'Calculate the number of rows of data in the dataset
@@ -201,34 +206,44 @@ For a = 2 To Answer_NumRows
             MaxVolIncrease = Application.WorksheetFunction.Max(Range("O2:O" & Answer_NumRows))
             
             'Print Greatest Total Volume
-            Cells(4, 19).value = MaxVolIncrease
-            
+            Cells(4, 20).value = MaxVolIncrease
+                
+        'Check if Open Value is not zero
         If Open_Value <> 0 Then
         
-            'Calculate Percent Change
-            Percent_Change = (Yearly_Change / Open_Value)
+                'Calculate Percent Change
+                Percent_Change = (Yearly_Change / Open_Value)
+                
+                'Print the Percent Change Value
+                Range("N" & a).value = Percent_Change
+                
+                'Format Percent Change to Percent with 2 decimal places
+                Columns("N").NumberFormat = "0.00%"
+                
+                'Find the greatest % increase in stock value
+                MaxPercentIncrease = Application.WorksheetFunction.Max(Range("N2:N" & Answer_NumRows))
+                
+                'Print Greatest % Increase value
+                Cells(2, 20).value = MaxPercentIncrease
+                
+                'Find the greatest % decrease in stock volume
+                MinPercentIncrease = Application.WorksheetFunction.Min(Range("N2:N" & Answer_NumRows))
+                
+                'Print Greatest % decrease value
+                Cells(3, 20).value = MinPercentIncrease
+                
+                'Format % cells to present data with two decimal places
+                Range("T2:T3").NumberFormat = "0.00%"
             
-            'Print the Percent Change Value
-            Range("N" & a).value = Percent_Change
+            'If Open Value is 0
+            ElseIf Open_Value = 0 Then
             
-            'Format Percent Change to Percent with 2 decimal places
-            Columns("N").NumberFormat = "0.00%"
+                'Percent Change is set to 0
+                Percent_Change = 0
+                
+                'Print the Percent Change Value
+                Range("N" & a).value = Percent_Change
             
-            'Find the greatest % increase in stock value
-            MaxPercentIncrease = Application.WorksheetFunction.Max(Range("N2:N" & Answer_NumRows))
-            
-            'Print Greatest % Increase value
-            Cells(2, 19).value = MaxPercentIncrease
-            
-            'Find the greatest % decrease in stock volume
-            MinPercentIncrease = Application.WorksheetFunction.Min(Range("N2:N" & Answer_NumRows))
-            
-            'Print Greatest % decrease value
-            Cells(3, 19).value = MinPercentIncrease
-            
-            'Format % cells to present data with two decimal places
-            Range("S2:S3").NumberFormat = "0.00%"
-         
         End If
     End If
 Next a
@@ -242,19 +257,20 @@ For v = 2 To Answer_NumRows
     If Cells(v, 14).value = MaxPercentIncrease Then
     
             'Print Ticker Value in designated cell
-            Cells(2, 18).value = Cells(v, 10).value
+            Cells(2, 19).value = Cells(v, 10).value
     
         'Find Ticker associated with Greatest % Decrease
         ElseIf Cells(v, 14).value = MinPercentIncrease Then
             
             'Print Ticker Value in designated cell
-            Cells(3, 18).value = Cells(v, 10).value
+            Cells(3, 19).value = Cells(v, 10).value
         
         'Find Ticker associated with Greatest Total Volume
         ElseIf Cells(v, 15).value = MaxVolIncrease Then
             
             'Print Ticker value in designated cell
-            Cells(4, 18).value = Cells(v, 10).value
+            Cells(4, 19).value = Cells(v, 10).value
+            
     End If
 Next v
 
@@ -284,13 +300,20 @@ Columns.AutoFit
 Columns.VerticalAlignment = xlCenter
 Rows(1).HorizontalAlignment = xlCenter
 Rows(1).Font.Bold = True
-Columns(17).Font.Bold = True
+Columns(18).Font.Bold = True
+
+
+'Delete Open Value and Close Value Columns
+Columns("K:L").EntireColumn.Delete
+
 
 'Looping through next sheet
 Next Current
 
-'Activating the original worksheet
+
+'Activating the original sheet
 starting_ws.Activate
+
 
 'Turn on screen updating and automatic calculations
 Application.Calculation = xlAutomatic
