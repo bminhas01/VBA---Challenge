@@ -5,20 +5,16 @@ Sub StockEvaluation()
 Dim Current As Worksheet
 Dim starting_ws As Worksheet
 
-
 'Set the current worksheet as active
 Set starting_ws = ActiveSheet
-
 
 'Turn off screen updating and automatic calculations
 Application.Calculation = xlManual
 Application.ScreenUpdating = False
 
-
 'Apply following code to one sheet at a time
 For Each Current In ThisWorkbook.Worksheets
     Current.Activate
-
 
 'Declare Variables
 Dim DataRange As Range
@@ -38,14 +34,12 @@ Dim Yearly_Change As Double
 Dim Percent_Change As Double
 Dim TotalStockVolume As Double
 Dim VolumeRow As Integer
-Dim MinPercentIncrease As Double
+Dim MaxPercentDecrease As Double
 Dim MaxPercentIncrease As Double
 Dim MaxVolIncrease As Double
 
-
 'Sort Data based on Ticker value and Date value
 Range("A1").CurrentRegion.Sort Key1:=Range("A1"), Order1:=xlAscending, Key2:=Range("B1"), Order2:=xlAscending, Header:=xlYes
-
 
 'Create titles for outputs
 Range("J1").value = "Ticker"
@@ -60,33 +54,25 @@ Cells(4, 18).value = "Greatest Total Volume"
 Cells(1, 19).value = "Ticker"
 Cells(1, 20).value = "Value"
 
-
 'Calculate the number of rows of data in the dataset
 Set DataRange = Range("A1").CurrentRegion
 NumRows = DataRange.Rows.Count
 
-
 'Keep track of each unique ticker value
 SummaryTableRow = 2
 
-
-' Set First as smallest date value
+'Set First Date and Last Date values
 FirstDate = Cells(2, 2).value
-
-
-'Set Last Date as largest date value
 Dim b As String
 b = "B"
 concat = b & NumRows
 value = Range(concat).value
 LastDate = value
 
-
-'Assign Year variable
+'Set Year variable
 Year = Left(Cells(2, 2).value, 4)
 
-
-'Finding next unique Ticker Value and Entering Ticker value in next available cell
+'Finding Ticker Value and associated Open Value and Close Value
 Dim I As Long
 For I = 2 To NumRows
     
@@ -107,11 +93,12 @@ For I = 2 To NumRows
               LastDate = Cells(I, 2).value
               FirstDate = Cells(I + 1, 2).value
               
-              'Assign Open Value and Close Value and print to summary table
+              'Assign Open Value and Close Value
               Open_Value = Cells(I + 1, 3).value
-              Range("K" & SummaryTableRow).value = Open_Value
-
               Close_Value = Cells(I, 6).value
+              
+              'Print Open Value and Close Value
+              Range("K" & SummaryTableRow).value = Open_Value
               Range("L" & SummaryTableRow - 1).value = Close_Value
               
            'If current ticker value is the same as that of the next row, review date values
@@ -123,31 +110,28 @@ For I = 2 To NumRows
                 
                 'Print Open Value to summary table
                 Range("K" & SummaryTableRow).value = Open_Value
-            
+                
         End If
     End If
 Next I
-
     
-' Set the Total Stock Volume to zero
+'Set the Total Stock Volume to zero
 TotalStockVolume = 0
-
 
 'Keep track of stock volume record for each unique ticker
 VolumeRow = 2
 
-
-' Calculating Total Stock Volume for each unique ticker value
+'Calculating Total Stock Volume for each unique ticker value
 Dim c As Long
 For c = 2 To NumRows
         
-    ' Confirm that record is within same year
+    'Confirm that record is within same year
     If Left(Cells(c, 2).value, 4) = Year Then
             
         'Check if the Ticker value of current record does not match the next record
         If Cells(c + 1, 1).value <> Cells(c, 1).value Then
             
-              ' Add stock volume of current record to Total Stock Volume
+              'Add stock volume of current record to Total Stock Volume
               TotalStockVolume = TotalStockVolume + Cells(c, 7).value
               
               'Print Total Stock Volume
@@ -156,164 +140,124 @@ For c = 2 To NumRows
               'Add one to the Volume Row
               VolumeRow = VolumeRow + 1
             
-              ' Reset Total Stock Volume for next Ticker
+              'Reset Total Stock Volume for next Ticker
               TotalStockVolume = 0
               
-            'If the current ticker value matches the next record
             Else
-                    
-                ' Add stock volume of current record to Total
+                'Add stock volume of current record to Total
                 TotalStockVolume = TotalStockVolume + Cells(c, 7).value
                 
-                ' Print Total Stock Volume
+                'Print Total Stock Volume
                 Range("O" & VolumeRow).value = TotalStockVolume
-    
+                
         End If
     End If
 Next c
-
 
 'Calculate number of unique Ticker Values
 Set AnswerRange = Range("J1").CurrentRegion
 Answer_NumRows = AnswerRange.Rows.Count
 
-
 'Delete contents of cell in summary table that does not have an associated Ticker value
 Range("K" & Answer_NumRows).Clear
-
 
 'Calculating Yearly Change and Percent Change for each Ticker Value
 Dim a As Integer
 For a = 2 To Answer_NumRows
     
-    'Check to make sure a ticker value exists
+    'Check to make sure record has an associated unique Ticker value
     If Cells(a, 10).value <> "" Then
                 
-            'Assign Open Value and Close Value for each Ticker Value
+            'Set Open Value and Close Value for each Ticker Value
             Open_Value = Cells(a, 11).value
             Close_Value = Cells(a, 12).value
             
-            'Calculate Yearly Change
+            'Calculate Yearly Change and find the greatest total volume
             Yearly_Change = Close_Value - Open_Value
+            MaxVolIncrease = Application.WorksheetFunction.Max(Range("O2:O" & Answer_NumRows))
             
-            'Print the Yearly Change value
+            'Print the Yearly Change value and the Greatest Total Volume
             Range("M" & a).value = Yearly_Change
+            Cells(4, 20).value = MaxVolIncrease
             
             'Format Yearly Change value to include 2 decimal places
             Columns("M").NumberFormat = "0.00"
             
-            'Find the greatest total volume
-            MaxVolIncrease = Application.WorksheetFunction.Max(Range("O2:O" & Answer_NumRows))
-            
-            'Print Greatest Total Volume
-            Cells(4, 20).value = MaxVolIncrease
-                
         'Check if Open Value is not zero
         If Open_Value <> 0 Then
         
-                'Calculate Percent Change
+                'Calculate Percent Change, the greatest % increase, and the greatest % decrease in stock volume
                 Percent_Change = (Yearly_Change / Open_Value)
-                
-                'Print the Percent Change Value
-                Range("N" & a).value = Percent_Change
-                
-                'Format Percent Change to Percent with 2 decimal places
-                Columns("N").NumberFormat = "0.00%"
-                
-                'Find the greatest % increase in stock value
                 MaxPercentIncrease = Application.WorksheetFunction.Max(Range("N2:N" & Answer_NumRows))
+                MaxPercentDecrease = Application.WorksheetFunction.Min(Range("N2:N" & Answer_NumRows))
                 
-                'Print Greatest % Increase value
+                'Print the Percent Change, Greatest % Increase, and Greatest % decrease values
+                Range("N" & a).value = Percent_Change
                 Cells(2, 20).value = MaxPercentIncrease
-                
-                'Find the greatest % decrease in stock volume
-                MinPercentIncrease = Application.WorksheetFunction.Min(Range("N2:N" & Answer_NumRows))
-                
-                'Print Greatest % decrease value
-                Cells(3, 20).value = MinPercentIncrease
+                Cells(3, 20).value = MaxPercentDecrease
                 
                 'Format % cells to present data with two decimal places
+                Columns("N").NumberFormat = "0.00%"
                 Range("T2:T3").NumberFormat = "0.00%"
             
             'If Open Value is 0
             ElseIf Open_Value = 0 Then
             
-                'Percent Change is set to 0
+                'Percent Change is set to 0 and print
                 Percent_Change = 0
-                
-                'Print the Percent Change Value
                 Range("N" & a).value = Percent_Change
-            
+                
         End If
     End If
 Next a
-
 
 'Finding Ticker values associated with Greatest % Increase/ Decrease and Greatest Total Volume
 Dim v As Integer
 For v = 2 To Answer_NumRows
     
-    'Find Ticker associated with Greatest % Increase
+    'Find Ticker associated with Greatest % Increase and print
     If Cells(v, 14).value = MaxPercentIncrease Then
-    
-            'Print Ticker Value in designated cell
             Cells(2, 19).value = Cells(v, 10).value
     
-        'Find Ticker associated with Greatest % Decrease
-        ElseIf Cells(v, 14).value = MinPercentIncrease Then
-            
-            'Print Ticker Value in designated cell
+        'Find Ticker associated with Greatest % Decrease and print
+        ElseIf Cells(v, 14).value = MaxPercentDecrease Then
             Cells(3, 19).value = Cells(v, 10).value
         
-        'Find Ticker associated with Greatest Total Volume
+        'Find Ticker associated with Greatest Total Volume and print
         ElseIf Cells(v, 15).value = MaxVolIncrease Then
-            
-            'Print Ticker value in designated cell
             Cells(4, 19).value = Cells(v, 10).value
             
     End If
 Next v
 
-
 'Formatting Yearly Change to identify positive vs. negative changes
 Dim f As Integer
 For f = 2 To Answer_NumRows
-    
-    'Identify cells in Yearly Change column with negative values
+
+    'Identify cells in Yearly Change column with negative values and color Red
     If Cells(f, 13).value < 0 Then
-        
-            'Change cell color to red
             Range("M" & f).Interior.Color = RGB(235, 0, 0)
         
-        'Identify cells in Yearly Change column with positive values
+        'Identify cells in Yearly Change column with positive values and color Green
         ElseIf Cells(f, 13).value > 0 Then
-            
-            'Change cell color to green
             Range("M" & f).Interior.Color = RGB(0, 188, 85)
-    
+            
     End If
 Next f
 
-
-'Formatting Data within worksheet
+'Format Data within worksheet
 Columns.AutoFit
 Columns.VerticalAlignment = xlCenter
 Rows(1).HorizontalAlignment = xlCenter
 Rows(1).Font.Bold = True
 Columns(18).Font.Bold = True
 
-
 'Delete Open Value and Close Value Columns
 Columns("K:L").EntireColumn.Delete
 
-
-'Looping through next sheet
+'Loop through next sheet and activate the original sheet once done
 Next Current
-
-
-'Activating the original sheet
 starting_ws.Activate
-
 
 'Turn on screen updating and automatic calculations
 Application.Calculation = xlAutomatic
